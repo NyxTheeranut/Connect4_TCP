@@ -29,13 +29,17 @@ Ensure you have the following installed:
 ## Running the Server
 Start the game server to handle player connections:
 ```sh
-python server.py
+python connect4_server.py
 ```
 
 ## Running the Streamlit Client
 Each player should run the client separately:
 ```sh
-streamlit run client.py
+streamlit run connect4_client.py 
+```
+or
+```sh
+streamlit run connect4_client_streamlit.py 
 ```
 
 ## How It Works
