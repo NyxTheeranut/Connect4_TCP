@@ -21,6 +21,10 @@ Ensure you have the following installed:
    git clone https://github.com/your-repo/connect4.git
    cd connect4
    ```
+2. Install Streamlit:
+   ```sh
+   pip install streamlit
+   ```
 
 ## Running the Server
 Start the game server to handle player connections:
@@ -31,7 +35,7 @@ python connect4_server.py
 ## Running the Streamlit Client
 Each player should run the client separately:
 ```sh
-streamlit run connect4_client.py 
+python connect4_client.py 
 ```
 or
 ```sh
