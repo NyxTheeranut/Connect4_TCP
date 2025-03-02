@@ -21,10 +21,6 @@ Ensure you have the following installed:
    git clone https://github.com/your-repo/connect4.git
    cd connect4
    ```
-2. Install dependencies:
-   ```sh
-   pip install -r requirements.txt
-   ```
 
 ## Running the Server
 Start the game server to handle player connections:
