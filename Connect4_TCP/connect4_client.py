@@ -2,7 +2,7 @@ import socket
 import ast
 import os
 import threading
-import time
+import time  # Ensure time is imported for sleep
 
 def clear_terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -49,7 +49,8 @@ def receive_updates():
                         condition.notify_all()
                     elif status == 400:
                         display_board(board, "Invalid move! Try again.")
-                        time.sleep(1)
+                        time.sleep(2)  # Keep the message visible for 2 seconds
+                        display_board(board)  # Redraw the board without the message
                         turn_in_progress = False
                         condition.notify_all()
         except Exception as e:
@@ -79,14 +80,15 @@ while True:
                 turn_in_progress = True
                 client_socket.send(f"Column {col}".encode())
                 while turn_in_progress:
-                    condition.wait(timeout=5)
+                    condition.wait(timeout=0.1)
             except ValueError:
-                print("Please enter a valid number!")
-                time.sleep(1)
+                display_board(current_board, "Please enter a valid number!")
+                time.sleep(2)  # Show error for local input issues (e.g., non-integer input)
+                turn_in_progress = False
         else:
             display_board(current_board)
             print(f"Waiting for Player {current_turn}...")
-            time.sleep(1)
+            condition.wait(timeout=0.1)  # Small timeout to avoid tight loop
 
 print("Client shutting down...")
 client_socket.close()
