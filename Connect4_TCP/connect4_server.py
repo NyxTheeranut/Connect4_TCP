@@ -82,7 +82,7 @@ def handle_client(client_socket, player_num):
                     print(f"Sending to Player {3 - player_num}: {msg}")
                     opponent_socket.send(msg.encode())
                 else:
-                    print(f"Player {player_num} move invalid: column {col}")
+                    print(f"400|Player {player_num} move invalid: column {col}")
                     client_socket.send("400|Invalid move".encode())
         except Exception as e:
             print(f"Player {player_num} disconnected: {e}")
