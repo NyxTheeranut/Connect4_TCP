@@ -1,5 +1,6 @@
 import socket
 import threading
+import time
 
 class Connect4:
     def __init__(self):
@@ -14,13 +15,13 @@ class Connect4:
         with self.lock:
             if self.winner != 0 or self.current_player != player:
                 return False
-            if not (0 <= col < self.cols):  # Check valid column range
+            if not (0 <= col < self.cols):
                 return False
             for row in range(self.rows - 1, -1, -1):
                 if self.board[row][col] == 0:
                     self.board[row][col] = player
                     return True
-            return False  # Column full
+            return False
 
     def check_winner(self):
         with self.lock:
@@ -56,6 +57,8 @@ server_socket.listen(2)
 print("Server started. Waiting for 2 players to connect...")
 clients = []
 game = Connect4()
+game_ended = False  
+lock = threading.Lock()
 
 for i in range(2):
     client_socket, addr = server_socket.accept()
@@ -64,6 +67,7 @@ for i in range(2):
     client_socket.send(f"Player {i + 1}".encode())
 
 def handle_client(client_socket, player_num):
+    global game_ended
     opponent_socket = clients[1] if player_num == 1 else clients[0]
     while True:
         try:
@@ -81,21 +85,38 @@ def handle_client(client_socket, player_num):
                     client_socket.send(msg.encode())
                     print(f"Sending to Player {3 - player_num}: {msg}")
                     opponent_socket.send(msg.encode())
+                    if game.winner != 0:
+                        with lock:
+                            game_ended = True 
+                        time.sleep(2)  
+                        break
                 else:
-                    print(f"Sending to Player {player_num}: 400|move invalid with column {col}")
+                    print(f"400|Player {player_num} move invalid: column {col}")
                     client_socket.send("400|Invalid move".encode())
         except Exception as e:
             print(f"Player {player_num} disconnected: {e}")
             break
+    client_socket.close()
+    opponent_socket.close()
 
-threading.Thread(target=handle_client, args=(clients[0], 1), daemon=True).start()
-threading.Thread(target=handle_client, args=(clients[1], 2), daemon=True).start()
+thread1 = threading.Thread(target=handle_client, args=(clients[0], 1), daemon=True)
+thread2 = threading.Thread(target=handle_client, args=(clients[1], 2), daemon=True)
+thread1.start()
+thread2.start()
 
 try:
     while True:
-        pass
+        with lock:
+            if game_ended:
+                print("Game over detected, shutting down server...")
+                time.sleep(1) 
+                for client in clients:
+                    client.close()
+                server_socket.close()
+                break
+        time.sleep(0.1)
 except KeyboardInterrupt:
-    print("Server shutting down...")
+    print("Server shutting down manually...")
     for client in clients:
         client.close()
     server_socket.close()
