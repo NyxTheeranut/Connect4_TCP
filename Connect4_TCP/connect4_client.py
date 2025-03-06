@@ -2,7 +2,7 @@ import socket
 import ast
 import os
 import threading
-import time  # Ensure time is imported for sleep
+import time
 
 def clear_terminal():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -30,10 +30,11 @@ winner = 0
 lock = threading.Lock()
 condition = threading.Condition(lock)
 turn_in_progress = False
+game_over = False
 
 def receive_updates():
-    global board, current_player, winner, turn_in_progress
-    while True:
+    global board, current_player, winner, turn_in_progress, game_over
+    while not game_over:
         try:
             data = client_socket.recv(1024).decode()
             if data:
@@ -46,15 +47,19 @@ def receive_updates():
                         winner = int(parts[3])
                         display_board(board)
                         turn_in_progress = False
+                        if winner != 0:
+                            game_over = True
                         condition.notify_all()
                     elif status == 400:
                         display_board(board, "Invalid move! Try again.")
-                        time.sleep(2)  # Keep the message visible for 2 seconds
-                        display_board(board)  # Redraw the board without the message
+                        time.sleep(2)
+                        display_board(board)
                         turn_in_progress = False
                         condition.notify_all()
         except Exception as e:
             print(f"Server disconnected: {e}")
+            game_over = True
+            condition.notify_all()
             break
 
 receive_thread = threading.Thread(target=receive_updates, daemon=True)
@@ -69,6 +74,7 @@ while True:
     if game_winner != 0:
         display_board(current_board)
         print(f"Game Over! Player {game_winner} wins!")
+        time.sleep(2) 
         break
 
     with condition:
@@ -80,15 +86,15 @@ while True:
                 turn_in_progress = True
                 client_socket.send(f"Column {col}".encode())
                 while turn_in_progress:
-                    condition.wait(timeout=0.1)
+                    condition.wait(timeout=5)
             except ValueError:
                 display_board(current_board, "Please enter a valid number!")
-                time.sleep(2)  # Show error for local input issues (e.g., non-integer input)
+                time.sleep(2)
                 turn_in_progress = False
         else:
             display_board(current_board)
             print(f"Waiting for Player {current_turn}...")
-            condition.wait(timeout=0.1)  # Small timeout to avoid tight loop
+            condition.wait()
 
 print("Client shutting down...")
 client_socket.close()
